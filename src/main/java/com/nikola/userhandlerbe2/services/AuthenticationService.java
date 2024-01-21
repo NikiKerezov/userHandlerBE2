@@ -1,6 +1,6 @@
 package com.nikola.userhandlerbe2.services;
 
-import com.nikola.userhandlerbe2.entities.Role;
+import com.nikola.userhandlerbe2.entities.UserRole;
 import com.nikola.userhandlerbe2.entities.User;
 import com.nikola.userhandlerbe2.repositories.UserRepository;
 import com.nikola.userhandlerbe2.requests.AuthenticationRequest;
@@ -21,13 +21,14 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     public AuthenticationResponse register(RegisterRequest request) {
+        System.out.println(request);
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .userRole(UserRole.USER)
                 .build();
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("User with such username already exists!");
