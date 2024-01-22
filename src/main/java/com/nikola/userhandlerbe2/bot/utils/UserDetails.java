@@ -1,4 +1,4 @@
-package com.nikola.userhandlerbe2.bot;
+package com.nikola.userhandlerbe2.bot.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

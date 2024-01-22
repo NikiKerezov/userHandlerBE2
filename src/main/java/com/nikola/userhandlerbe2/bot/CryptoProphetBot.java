@@ -1,5 +1,6 @@
 package com.nikola.userhandlerbe2.bot;
 
+import com.nikola.userhandlerbe2.bot.utils.UserDetails;
 import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,27 +20,25 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CryptoProphetBot extends TelegramLongPollingBot {
-    public static CryptoProphetBot instance = getInstance();
-
     @Autowired
     private CryptoCurrencyService cryptoCurrencyService;
 
-    public static CryptoProphetBot getInstance() {
-        if (instance == null) {
-            try {
-                TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-                CryptoProphetBot cryptoProphetBot = new CryptoProphetBot();
-                telegramBotsApi.registerBot(cryptoProphetBot);
-                instance = cryptoProphetBot;
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return instance;
+    boolean isRegistered = false;
+
+    public CryptoProphetBot() {
+        registerBot();
     }
 
-    private CryptoProphetBot() {
-        super();
+    private void registerBot() {
+        if (!isRegistered) {
+            try {
+                TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+                botsApi.registerBot(this);
+                isRegistered = true;
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private Set<UserDetails> users = new HashSet<>();
@@ -55,6 +54,9 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        if (!isRegistered) {
+            registerBot();
+        }
         var message = update.getMessage();
         var user = message.getFrom();
         System.out.println(message.getText());
@@ -64,6 +66,9 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
     }
 
     public void sendMessage(Long userId, String message) {
+        if (!isRegistered) {
+            registerBot();
+        }
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(userId.toString())
                 .text(message)
@@ -93,11 +98,10 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                         """);
             }
             case "/subscribe" -> {
-            }
-            case "/updatecrypto" -> {
-                cryptoCurrencyService.updateCryptoCurrency(message.split(" ")[1]);
+                cryptoCurrencyService.addSubscribersToCryptoCurrency(message.split(" ")[1], userId);
             }
             case "/unsubscribe" -> {
+                cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId);
             }
             case "/charts" -> {
                 //TODO call the charts endpoint of the secured API
