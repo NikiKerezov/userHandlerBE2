@@ -13,26 +13,26 @@ import java.util.Optional;
 public class CryptoCurrencyService {
    private final CryptoCurrencyRepository cryptoCurrencyRepository;
 
-   public void addSubscribersToCryptoCurrency(String currencyName, Long telegramId) {
+   public String addSubscribersToCryptoCurrency(String currencyName, Long telegramId) {
        Optional<CryptoCurrency> cryptoCurrency = cryptoCurrencyRepository.findByName(currencyName);
-       if (cryptoCurrency.isPresent()) {
+       if (cryptoCurrency.isPresent() && !cryptoCurrency.get().getSubscribersTelegramIds().contains(telegramId)) {
            CryptoCurrency existingCryptoCurrency = cryptoCurrency.get();
            existingCryptoCurrency.addSubscriber(telegramId);
-           existingCryptoCurrency.setPrice(9999);
-           cryptoCurrencyRepository.updateByName(existingCryptoCurrency.getName(), existingCryptoCurrency.getPrice(), existingCryptoCurrency.getMarketCap(), existingCryptoCurrency.getVolume24h(), existingCryptoCurrency.getChange24h(), existingCryptoCurrency.getChange7d(), existingCryptoCurrency.getLastUpdated(), existingCryptoCurrency.getSubscribersTelegramIds());
-           CryptoCurrency test = cryptoCurrencyRepository.findByName(currencyName).get();
-           System.out.println(test.getSubscribersTelegramIds());
-           System.out.println(test.getPrice());
+           cryptoCurrencyRepository.save(existingCryptoCurrency);
+           return "You have successfully subscribed to " + currencyName + "!";
        }
+
+         return "You are already subscribed to " + currencyName + "!";
    }
 
-    public void removeSubscribersFromCryptoCurrency(String currencyName, Long telegramId) {
+    public String removeSubscribersFromCryptoCurrency(String currencyName, Long telegramId) {
          Optional<CryptoCurrency> cryptoCurrency = cryptoCurrencyRepository.findByName(currencyName);
-         if (cryptoCurrency.isPresent()) {
+         if (cryptoCurrency.isPresent() && cryptoCurrency.get().getSubscribersTelegramIds().contains(telegramId)) {
               CryptoCurrency existingCryptoCurrency = cryptoCurrency.get();
               existingCryptoCurrency.removeSubscriber(telegramId);
-              cryptoCurrencyRepository.updateByName(existingCryptoCurrency.getName(), existingCryptoCurrency.getPrice(), existingCryptoCurrency.getMarketCap(), existingCryptoCurrency.getVolume24h(), existingCryptoCurrency.getChange24h(), existingCryptoCurrency.getChange7d(), existingCryptoCurrency.getLastUpdated(), existingCryptoCurrency.getSubscribersTelegramIds());
-              CryptoCurrency test = cryptoCurrencyRepository.findByName(currencyName).get();
+              cryptoCurrencyRepository.save(existingCryptoCurrency);
+                return "You have successfully unsubscribed from " + currencyName + "!";
          }
+            return "You are not subscribed to " + currencyName + "!";
     }
 }

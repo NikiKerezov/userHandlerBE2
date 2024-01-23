@@ -14,8 +14,8 @@ public interface CryptoCurrencyRepository extends MongoRepository<CryptoCurrency
     Optional<CryptoCurrency> findBySymbol(String symbol);
     Optional<CryptoCurrency> findByName(String name);
 
-    @Modifying
-    @Query("{'name': ?0, 'price': ?1, 'marketCap': ?2, 'volume24h': ?3, 'change24h': ?4, 'change7d': ?5, 'lastUpdated': ?6, 'subscribersTelegramIds': ?7}")
-    void updateByName(String name, double price, double marketCap, double volume24h, double change24h, double change7d, Date lastUpdated, List<Long> subscribersTelegramIds);
+//    @Modifying
+//    @Query("{'name': ?0, 'price': ?1, 'marketCap': ?2, 'volume24h': ?3, 'change24h': ?4, 'change7d': ?5, 'lastUpdated': ?6, 'subscribersTelegramIds': ?7}")
+//    void updateByName(String name, double price, double marketCap, double volume24h, double change24h, double change7d, Date lastUpdated, List<Long> subscribersTelegramIds);
 
 }

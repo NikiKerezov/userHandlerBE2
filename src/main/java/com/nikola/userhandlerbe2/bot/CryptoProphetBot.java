@@ -98,10 +98,10 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                         """);
             }
             case "/subscribe" -> {
-                cryptoCurrencyService.addSubscribersToCryptoCurrency(message.split(" ")[1], userId);
+                sendMessage(userId, cryptoCurrencyService.addSubscribersToCryptoCurrency(message.split(" ")[1], userId));
             }
             case "/unsubscribe" -> {
-                cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId);
+                sendMessage(userId, cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId));
             }
             case "/charts" -> {
                 //TODO call the charts endpoint of the secured API

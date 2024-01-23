@@ -66,7 +66,7 @@ public class UpdateCryptoCurrenciesCron {
 
                 //notify users
                 double priceDifferencePercent = (newPrice - oldPrice) / oldPrice * 100;
-                if (priceDifferencePercent > 5 || priceDifferencePercent < -5)
+                if (priceDifferencePercent > 1 || priceDifferencePercent < -1)
                     for (Long id : existingCryptoCurrency.getSubscribersTelegramIds()) {
                         cryptoProphetBot.sendMessage(id, "Price of " + existingCryptoCurrency.getName() + " has changed from " + oldPrice + " to " + newPrice + "$!");
                         cryptoProphetBot.sendMessage(id, "Price difference is " + priceDifferencePercent + "%");
@@ -75,12 +75,7 @@ public class UpdateCryptoCurrenciesCron {
                 System.out.println(existingCryptoCurrency.getName() + " " + existingCryptoCurrency.getPrice());
 
                 // Save the updated cryptocurrency
-                cryptoCurrencyRepository.updateByName(
-                        existingCryptoCurrency.getName(), existingCryptoCurrency.getPrice(),
-                        existingCryptoCurrency.getMarketCap(), existingCryptoCurrency.getVolume24h(),
-                        existingCryptoCurrency.getChange24h(), existingCryptoCurrency.getChange7d(),
-                        existingCryptoCurrency.getLastUpdated(), existingCryptoCurrency.getSubscribersTelegramIds()
-                );
+                cryptoCurrencyRepository.save(existingCryptoCurrency);
             } catch (Exception e) {
                 // Handle any exceptions that occur
                 throw new RuntimeException("Failed to update crypto currency", e);
@@ -128,10 +123,10 @@ public class UpdateCryptoCurrenciesCron {
     }
     @Scheduled(fixedDelay = 60000)
     public void invokeUpdateCryptoCurrencies() {
-//            updateCryptoCurrency("Bitcoin");
-//            updateCryptoCurrency("Ethereum");
-//            updateCryptoCurrency("Ripple");
-//            updateCryptoCurrency("Tether");
-//            updateCryptoCurrency("Cardano");
+            updateCryptoCurrency("Bitcoin");
+            updateCryptoCurrency("Ethereum");
+            updateCryptoCurrency("Ripple");
+            updateCryptoCurrency("Tether");
+            updateCryptoCurrency("Cardano");
     }
 }
