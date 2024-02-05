@@ -121,7 +121,7 @@ public class UpdateCryptoCurrenciesCron {
             }
         }
     }
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 120000)
     public void invokeUpdateCryptoCurrencies() {
             updateCryptoCurrency("Bitcoin");
             updateCryptoCurrency("Ethereum");
