@@ -2,6 +2,7 @@ package com.nikola.userhandlerbe2.bot;
 
 import com.nikola.userhandlerbe2.bot.utils.UserDetails;
 import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
+import com.nikola.userhandlerbe2.utils.LineChartMaker;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +10,16 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.File;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -80,6 +86,25 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
         }
     }
 
+    public void sendImage(Long userId, File image) {
+        if (!isRegistered) {
+            registerBot();
+        }
+
+        // Create send method
+        SendPhoto sendPhotoRequest = new SendPhoto();
+        // Set destination chat id
+        sendPhotoRequest.setChatId(userId.toString());
+        // Set the photo url as a simple photo
+        sendPhotoRequest.setPhoto(new InputFile(image.getFileId()));
+        try {
+            // Execute the method
+            execute(sendPhotoRequest);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void handleMessage(Long userId, String message) {
         String firstWord = message.split(" ")[0];
         String messageLowerCase = firstWord.toLowerCase();
@@ -104,7 +129,11 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 sendMessage(userId, cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId));
             }
             case "/charts" -> {
-                //TODO call the charts endpoint of the secured API
+                List<Double> values = new ArrayList<>();
+                values.add(1.0);
+                values.add(2.0);
+                values.add(3.0);
+                LineChartMaker.plotLineChart(values);
             }
             case "/news" -> {
                 //TODO call the news endpoint of the secured API

@@ -9,5 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDetails {
     Long id;
+    //TODO IMPLEMENT JWT TOKEN CHECK FOR USER SO HE CAN OR CANNOT TALK WITH THE BOT
     String jwtToken;
 }
