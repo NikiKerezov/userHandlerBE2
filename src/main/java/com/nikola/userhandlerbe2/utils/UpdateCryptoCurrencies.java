@@ -1,9 +1,8 @@
-package com.nikola.userhandlerbe2.bot.utils;
+package com.nikola.userhandlerbe2.utils;
 
 import com.nikola.userhandlerbe2.bot.CryptoProphetBot;
 import com.nikola.userhandlerbe2.entities.CryptoCurrency;
 import com.nikola.userhandlerbe2.repositories.CryptoCurrencyRepository;
-import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,7 +18,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UpdateCryptoCurrenciesCron {
+public class UpdateCryptoCurrencies {
     private final CryptoCurrencyRepository cryptoCurrencyRepository;
     private final CryptoProphetBot cryptoProphetBot;
 
@@ -121,12 +120,12 @@ public class UpdateCryptoCurrenciesCron {
             }
         }
     }
-    @Scheduled(fixedDelay = 120000)
+    @Scheduled(fixedDelay = 600000)
     public void invokeUpdateCryptoCurrencies() {
-            updateCryptoCurrency("Bitcoin");
-            updateCryptoCurrency("Ethereum");
-            updateCryptoCurrency("Ripple");
-            updateCryptoCurrency("Tether");
-            updateCryptoCurrency("Cardano");
+//            updateCryptoCurrency("Bitcoin");
+//            updateCryptoCurrency("Ethereum");
+//            updateCryptoCurrency("Ripple");
+//            updateCryptoCurrency("Tether");
+//            updateCryptoCurrency("Cardano");
     }
 }

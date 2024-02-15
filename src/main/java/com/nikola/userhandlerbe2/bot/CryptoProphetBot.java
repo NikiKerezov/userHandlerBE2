@@ -1,7 +1,8 @@
 package com.nikola.userhandlerbe2.bot;
 
-import com.nikola.userhandlerbe2.bot.utils.UserDetails;
 import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
+import com.nikola.userhandlerbe2.services.UserService;
+import com.nikola.userhandlerbe2.utils.CryptoCurrenciesFetcherService;
 import com.nikola.userhandlerbe2.utils.LineChartMaker;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +28,15 @@ import java.util.Set;
 public class CryptoProphetBot extends TelegramLongPollingBot {
     @Autowired
     private CryptoCurrencyService cryptoCurrencyService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CryptoCurrenciesFetcherService cryptoCurrenciesFetcher;
+
+    @Autowired
+    private LineChartMaker lineChartMaker;
 
     boolean isRegistered = false;
 
@@ -116,26 +125,67 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 sendMessage(userId, """
                         /start - Start the bot
                         /help - Show the list of available commands
+                        /id - Show your telegram id so you can set it in the web page
                         /subscribe - Subscribe to a new cryptocurrency
                         /unsubscribe - Unsubscribe from a cryptocurrency
                         /charts - Show charts for a cryptocurrency
                         /news - Show news for a cryptocurrency
                         """);
             }
+            case "/id" -> {
+                sendMessage(userId, "Your telegram id is: " + userId);
+            }
             case "/subscribe" -> {
+                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                    sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
+                    return;
+                }
                 sendMessage(userId, cryptoCurrencyService.addSubscribersToCryptoCurrency(message.split(" ")[1], userId));
+
             }
             case "/unsubscribe" -> {
+                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                    sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
+                    return;
+                }
                 sendMessage(userId, cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId));
             }
             case "/charts" -> {
-                List<Double> values = new ArrayList<>();
-                values.add(1.0);
-                values.add(2.0);
-                values.add(3.0);
-                LineChartMaker.plotLineChart(values);
+                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                    sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
+                    return;
+                }
+                switch (message.split(" ")[2]) {
+                    case "1h" -> {
+                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastHour(message.split(" ")[1]);
+                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                    }
+                    case "24h" -> {
+                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastDay(message.split(" ")[1]);
+                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                    }
+                    case "7d" -> {
+                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastWeek(message.split(" ")[1]);
+                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                    }
+                    case "30d" -> {
+                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastMonth(message.split(" ")[1]);
+                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                    }
+                    case "1y" -> {
+                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastYear(message.split(" ")[1]);
+                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                    }
+                    default -> {
+                        sendMessage(userId, "Unknown time period. Please use /help to see the list of available commands.");
+                    }
+                }
             }
             case "/news" -> {
+                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                    sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
+                    return;
+                }
                 //TODO call the news endpoint of the secured API
             }
             default -> {

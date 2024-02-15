@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class StripeHookService {
     private final CustomerDetailsExtractor customerDetailsExtractor;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserService userService;
 
     public void handle(String payload) {
         Event event = null;
@@ -39,18 +40,21 @@ public class StripeHookService {
                 System.out.println("Customer name: " + customerDetailsExtractor.extractCustomerName(payload));
                 System.out.println("Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload));
                 System.out.println("Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
+                userService.setEnabled(customerDetailsExtractor.extractCustomerEmail(payload), true);
                 break;
             case "customer.subscription.deleted":
                 System.out.println("Subscription deleted");
                 System.out.println("Customer name: " + customerDetailsExtractor.extractCustomerName(payload));
                 System.out.println("Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload));
                 System.out.println("Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
+                userService.setEnabled(customerDetailsExtractor.extractCustomerEmail(payload), false);
                 break;
             case "invoice.payment_failed":
                 System.out.println("Payment failed");
                 System.out.println("Customer name: " + customerDetailsExtractor.extractCustomerName(payload));
                 System.out.println("Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload));
                 System.out.println("Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
+                userService.setEnabled(customerDetailsExtractor.extractCustomerEmail(payload), false);
                 break;
         }
     }
