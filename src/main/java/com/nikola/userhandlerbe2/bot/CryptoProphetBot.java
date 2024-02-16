@@ -4,6 +4,7 @@ import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
 import com.nikola.userhandlerbe2.services.UserService;
 import com.nikola.userhandlerbe2.utils.CryptoCurrenciesFetcherService;
 import com.nikola.userhandlerbe2.utils.LineChartMaker;
+import com.nikola.userhandlerbe2.utils.VertexAiPrompter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +39,9 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
 
     @Autowired
     private LineChartMaker lineChartMaker;
+
+    @Autowired
+    private VertexAiPrompter vertexAiPrompter;
 
     boolean isRegistered = false;
 
@@ -186,7 +191,18 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
-                //TODO call the news endpoint of the secured API
+
+                try {
+                    String response = vertexAiPrompter.getNewsOnCryptoCurrency(message.split(" ")[1]);
+                    if (response != null && !response.isEmpty()) {
+                        sendMessage(userId, response);
+                    } else {
+                        sendMessage(userId, "Failed to get news for the cryptocurrency");
+                    }
+                } catch (IOException e) {
+                    sendMessage(userId, "Failed to get news for the cryptocurrency");
+                    throw new RuntimeException(e);
+                }
             }
             default -> {
                 sendMessage(userId, "Unknown command. Please use /help to see the list of available commands.");
