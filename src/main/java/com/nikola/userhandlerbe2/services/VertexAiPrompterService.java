@@ -1,4 +1,4 @@
-package com.nikola.userhandlerbe2.utils;
+package com.nikola.userhandlerbe2.services;
 
 
 import com.google.cloud.aiplatform.v1beta1.EndpointName;
@@ -7,7 +7,8 @@ import com.google.cloud.aiplatform.v1beta1.PredictionServiceClient;
 import com.google.cloud.aiplatform.v1beta1.PredictionServiceSettings;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
-import lombok.NoArgsConstructor;
+import com.nikola.userhandlerbe2.entities.ArticlesAndSentiments;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,12 +16,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@NoArgsConstructor
-public class VertexAiPrompter {
+@RequiredArgsConstructor
+public class VertexAiPrompterService {
+  private final ArticleScraperService articleScraperService;
+  private final GetLatestNewsService getLatestNewsService;
 
-  public String getNewsOnCryptoCurrency(String name) throws IOException {
+  public ArticlesAndSentiments getNewsOnCryptoCurrency(String name) throws Exception {
+    List<String> articleLinks = getLatestNewsService.getArticleLinks(name);
+    StringBuilder articles = new StringBuilder();
+    for (String articleLink : articleLinks) {
+      articles.append("\nARTICLE\n").append(articleScraperService.scrapeArticle(articleLink)).append("\n");
+    }
      String instance =
-        "{ \"prompt\": " + "\" What day is it today? \"}";
+        "{ \"prompt\": " + "\" This are my articles:  \n"  + articles +
+                " \n What is the sentiment on buying in on " + name + " in these articles? Give a sentiment for each one and then combined.\" }";
     String parameters =
         "{\n"
             + "  \"temperature\": 0.2,\n"
@@ -31,7 +40,7 @@ public class VertexAiPrompter {
     String project = "cryptoprophet";
     String location = "us-central1";
     String publisher = "google";
-    String model = "text-unicorn@001";
+    String model = "text-bison@002";
 
     PredictResponse predictResponse = predictTextPrompt(instance, parameters, project, location, publisher, model);
 
@@ -41,7 +50,10 @@ public class VertexAiPrompter {
     Value content = prediction.getStructValue().getFieldsMap().get("content");
 
     // Extract the string value of the 'content' field
-      return content.getStringValue();
+    ArticlesAndSentiments articlesAndSentiments = new ArticlesAndSentiments();
+    articlesAndSentiments.setArticles(articleLinks);
+    articlesAndSentiments.setSentiments(content.getStringValue());
+    return articlesAndSentiments;
   }
 
   // Get a text prompt from a supported text model

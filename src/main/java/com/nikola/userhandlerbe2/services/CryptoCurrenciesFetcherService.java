@@ -1,4 +1,4 @@
-package com.nikola.userhandlerbe2.utils;
+package com.nikola.userhandlerbe2.services;
 
 import lombok.RequiredArgsConstructor;
 import org.json.JSONArray;

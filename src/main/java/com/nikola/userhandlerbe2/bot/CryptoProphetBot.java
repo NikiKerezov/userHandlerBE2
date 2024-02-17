@@ -1,10 +1,11 @@
 package com.nikola.userhandlerbe2.bot;
 
+import com.nikola.userhandlerbe2.entities.ArticlesAndSentiments;
+import com.nikola.userhandlerbe2.services.CryptoCurrenciesFetcherService;
 import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
 import com.nikola.userhandlerbe2.services.UserService;
-import com.nikola.userhandlerbe2.utils.CryptoCurrenciesFetcherService;
+import com.nikola.userhandlerbe2.services.VertexAiPrompterService;
 import com.nikola.userhandlerbe2.utils.LineChartMaker;
-import com.nikola.userhandlerbe2.utils.VertexAiPrompter;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +41,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
     private LineChartMaker lineChartMaker;
 
     @Autowired
-    private VertexAiPrompter vertexAiPrompter;
+    private VertexAiPrompterService vertexAiPrompter;
 
     boolean isRegistered = false;
 
@@ -193,13 +193,18 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 }
 
                 try {
-                    String response = vertexAiPrompter.getNewsOnCryptoCurrency(message.split(" ")[1]);
-                    if (response != null && !response.isEmpty()) {
-                        sendMessage(userId, response);
+                    ArticlesAndSentiments response = vertexAiPrompter.getNewsOnCryptoCurrency(message.split(" ")[1]);
+                    if (response != null && !response.getArticles().isEmpty() && !response.getSentiments().isEmpty()) {
+                        sendMessage(userId, "Here are the articles that I found! :D");
+                        for (String article : response.getArticles()) {
+                            sendMessage(userId, article);
+                        }
+                        sendMessage(userId, "Here are the sentiments that I found! :D");
+                        sendMessage(userId, response.getSentiments());
                     } else {
                         sendMessage(userId, "Failed to get news for the cryptocurrency");
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
                     sendMessage(userId, "Failed to get news for the cryptocurrency");
                     throw new RuntimeException(e);
                 }

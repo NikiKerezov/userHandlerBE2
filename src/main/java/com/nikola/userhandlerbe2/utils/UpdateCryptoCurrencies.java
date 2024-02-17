@@ -122,10 +122,10 @@ public class UpdateCryptoCurrencies {
     }
     @Scheduled(fixedDelay = 600000)
     public void invokeUpdateCryptoCurrencies() {
-//            updateCryptoCurrency("Bitcoin");
-//            updateCryptoCurrency("Ethereum");
-//            updateCryptoCurrency("Ripple");
-//            updateCryptoCurrency("Tether");
-//            updateCryptoCurrency("Cardano");
+            updateCryptoCurrency("Bitcoin");
+            updateCryptoCurrency("Ethereum");
+            updateCryptoCurrency("Ripple");
+            updateCryptoCurrency("Tether");
+            updateCryptoCurrency("Cardano");
     }
 }
