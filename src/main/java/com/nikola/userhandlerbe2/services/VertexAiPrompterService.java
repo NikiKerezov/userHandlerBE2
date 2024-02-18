@@ -7,7 +7,6 @@ import com.google.cloud.aiplatform.v1beta1.PredictionServiceClient;
 import com.google.cloud.aiplatform.v1beta1.PredictionServiceSettings;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
-import com.nikola.userhandlerbe2.entities.ArticlesAndSentiments;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,17 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VertexAiPrompterService {
   private final ArticleScraperService articleScraperService;
-  private final GetLatestNewsService getLatestNewsService;
 
-  public ArticlesAndSentiments getNewsOnCryptoCurrency(String name) throws Exception {
-    List<String> articleLinks = getLatestNewsService.getArticleLinks(name);
-    StringBuilder articles = new StringBuilder();
-    for (String articleLink : articleLinks) {
-      articles.append("\nARTICLE\n").append(articleScraperService.scrapeArticle(articleLink)).append("\n");
-    }
+  public String getSentiments(String cryptoCurrencyName, String articles) throws Exception {
      String instance =
-        "{ \"prompt\": " + "\" This are my articles:  \n"  + articles +
-                " \n What is the sentiment on buying in on " + name + " in these articles? Give a sentiment for each one and then combined.\" }";
+        "{ \"prompt\": " + "\" This are my article(s):  \n"  + articles +
+                " \n What is the sentiment on buying in on " + cryptoCurrencyName + " in this article/these articles? Give a sentiment for each one and then combined if there are more than one.\" }";
     String parameters =
         "{\n"
             + "  \"temperature\": 0.2,\n"
@@ -49,11 +42,7 @@ public class VertexAiPrompterService {
     // Get the 'content' field from the prediction
     Value content = prediction.getStructValue().getFieldsMap().get("content");
 
-    // Extract the string value of the 'content' field
-    ArticlesAndSentiments articlesAndSentiments = new ArticlesAndSentiments();
-    articlesAndSentiments.setArticles(articleLinks);
-    articlesAndSentiments.setSentiments(content.getStringValue());
-    return articlesAndSentiments;
+    return content.getStringValue();
   }
 
   // Get a text prompt from a supported text model

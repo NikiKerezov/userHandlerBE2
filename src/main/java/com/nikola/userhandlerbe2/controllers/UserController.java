@@ -4,10 +4,7 @@ import com.nikola.userhandlerbe2.requests.SetTelegramIdRequest;
 import com.nikola.userhandlerbe2.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/userHandler/v2/user")
@@ -27,5 +24,11 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @RequestMapping("/isProfileEnabled")
+    @CrossOrigin(origins = "http://localhost:3000")
+    public ResponseEntity<Boolean> isEnabled(@RequestBody String username) {
+        return ResponseEntity.ok(userService.isEnabledByUsername(username));
     }
 }

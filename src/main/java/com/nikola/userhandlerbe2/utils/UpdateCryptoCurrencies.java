@@ -124,8 +124,8 @@ public class UpdateCryptoCurrencies {
     public void invokeUpdateCryptoCurrencies() {
             updateCryptoCurrency("Bitcoin");
             updateCryptoCurrency("Ethereum");
-            updateCryptoCurrency("Ripple");
-            updateCryptoCurrency("Tether");
+            updateCryptoCurrency("Solana");
+            updateCryptoCurrency("DogeCoin");
             updateCryptoCurrency("Cardano");
     }
 }

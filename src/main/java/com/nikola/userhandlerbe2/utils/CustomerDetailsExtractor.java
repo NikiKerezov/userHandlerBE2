@@ -18,6 +18,7 @@ public class CustomerDetailsExtractor {
     String customerName;
     String customerEmail;
     String paymentStatus;
+    String subscriptionId;
 
     private String grep(String regex, String payload) {
       Pattern pattern = Pattern.compile(regex);
@@ -38,6 +39,8 @@ public class CustomerDetailsExtractor {
                 customerName = grep("name=(.*?),", customerDetails);
                 customerEmail = grep("email=(.*?),", customerDetails);
                 this.paymentStatus = grep("payment_status=(.*?),", paymentStatus);
+                this.subscriptionId = grep("\"subscription\": (.*?),", payload);
+                this.subscriptionId = subscriptionId.replace("\"", "");
             } catch (RuntimeException e) {
                 System.out.println("Error extracting customer details: " + e.getMessage());
             }
@@ -47,24 +50,23 @@ public class CustomerDetailsExtractor {
 
     }
 
+    public String extractSubscriptionId(String payload) {
+        extractAll(payload);
+        return subscriptionId;
+    }
+
     public String extractCustomerName(String payload) {
-        if (customerName == null) {
-            extractAll(payload);
-        }
+        extractAll(payload);
         return customerName;
     }
 
     public String extractCustomerEmail(String payload) {
-        if (customerEmail == null) {
-            extractAll(payload);
-        }
+        extractAll(payload);
         return customerEmail;
     }
 
     public String extractPaymentStatus(String payload) {
-        if (paymentStatus == null) {
-            extractAll(payload);
-        }
+        extractAll(payload);
         return paymentStatus;
     }
 }

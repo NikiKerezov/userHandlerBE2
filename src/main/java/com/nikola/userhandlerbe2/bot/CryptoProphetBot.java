@@ -1,10 +1,6 @@
 package com.nikola.userhandlerbe2.bot;
 
-import com.nikola.userhandlerbe2.entities.ArticlesAndSentiments;
-import com.nikola.userhandlerbe2.services.CryptoCurrenciesFetcherService;
-import com.nikola.userhandlerbe2.services.CryptoCurrencyService;
-import com.nikola.userhandlerbe2.services.UserService;
-import com.nikola.userhandlerbe2.services.VertexAiPrompterService;
+import com.nikola.userhandlerbe2.services.*;
 import com.nikola.userhandlerbe2.utils.LineChartMaker;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,9 +9,6 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.objects.File;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -42,8 +35,12 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
 
     @Autowired
     private VertexAiPrompterService vertexAiPrompter;
-
-    boolean isRegistered = false;
+    @Autowired
+    private ArticleScraperService articleScraperService;
+    @Autowired
+    private GetLatestNewsService getLatestNewsService;
+    private boolean isRegistered = false;
+    private Set<Long> users = new HashSet<>();
 
     public CryptoProphetBot() {
         registerBot();
@@ -60,8 +57,6 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
             }
         }
     }
-
-    private Set<UserDetails> users = new HashSet<>();
     @Override
     public String getBotUsername() {
         return "CryptoProphet";
@@ -80,7 +75,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
         var message = update.getMessage();
         var user = message.getFrom();
         System.out.println(message.getText());
-        users.add(new UserDetails(user.getId(), null));
+        users.add(user.getId());
         System.out.println(user.getId());
         handleMessage(user.getId(), message.getText());
     }
@@ -100,25 +95,6 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendImage(Long userId, File image) {
-        if (!isRegistered) {
-            registerBot();
-        }
-
-        // Create send method
-        SendPhoto sendPhotoRequest = new SendPhoto();
-        // Set destination chat id
-        sendPhotoRequest.setChatId(userId.toString());
-        // Set the photo url as a simple photo
-        sendPhotoRequest.setPhoto(new InputFile(image.getFileId()));
-        try {
-            // Execute the method
-            execute(sendPhotoRequest);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void handleMessage(Long userId, String message) {
         String firstWord = message.split(" ")[0];
         String messageLowerCase = firstWord.toLowerCase();
@@ -131,17 +107,17 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                         /start - Start the bot
                         /help - Show the list of available commands
                         /id - Show your telegram id so you can set it in the web page
-                        /subscribe - Subscribe to a new cryptocurrency
-                        /unsubscribe - Unsubscribe from a cryptocurrency
-                        /charts - Show charts for a cryptocurrency
-                        /news - Show news for a cryptocurrency
+                        /subscribe - Subscribe to a new cryptocurrency \n-> /subscribe <cryptocurrency>
+                        /unsubscribe - Unsubscribe from a cryptocurrency \n-> /unsubscribe <cryptocurrency>
+                        /charts - Show charts for a cryptocurrency \n-> /charts <cryptocurrency> <time period> \n-> Time periods: 1h, 24h, 7d, 30d, 1y
+                        /news - Show news for a cryptocurrency \n-> /news <cryptocurrency>
                         """);
             }
             case "/id" -> {
                 sendMessage(userId, "Your telegram id is: " + userId);
             }
             case "/subscribe" -> {
-                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                if (userService.isEnabledByTgId(userId.toString()) == null || !userService.isEnabledByTgId(userId.toString())) {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
@@ -149,37 +125,62 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
 
             }
             case "/unsubscribe" -> {
-                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                if (userService.isEnabledByTgId(userId.toString()) == null || !userService.isEnabledByTgId(userId.toString())) {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
                 sendMessage(userId, cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId));
             }
             case "/charts" -> {
-                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                if (userService.isEnabledByTgId(userId.toString()) == null || !userService.isEnabledByTgId(userId.toString())) {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
                 switch (message.split(" ")[2]) {
                     case "1h" -> {
-                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastHour(message.split(" ")[1]);
-                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        try {
+                            List<Double> values = cryptoCurrenciesFetcher.getPriceForPastHour(message.split(" ")[1]);
+                            sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        } catch (Exception e) {
+                            sendMessage(userId, "Failed to get price for past hour. My calls have probably ran out. Try in a minute! :)");
+                            throw new RuntimeException(e);
+                        }
                     }
                     case "24h" -> {
-                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastDay(message.split(" ")[1]);
-                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        try {
+                            List<Double> values = cryptoCurrenciesFetcher.getPriceForPastDay(message.split(" ")[1]);
+                            sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        } catch (Exception e) {
+                            sendMessage(userId, "Failed to get price for past day. My calls have probably ran out. Try in a minute! :)");
+                            throw new RuntimeException(e);
+                        }
                     }
                     case "7d" -> {
-                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastWeek(message.split(" ")[1]);
-                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        try {
+                            List<Double> values = cryptoCurrenciesFetcher.getPriceForPastWeek(message.split(" ")[1]);
+                            sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        } catch (Exception e) {
+                            sendMessage(userId, "Failed to get price for past week. My calls have probably ran out. Try in a minute! :)");
+                            throw new RuntimeException(e);
+                        }
                     }
                     case "30d" -> {
-                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastMonth(message.split(" ")[1]);
-                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        try {
+                            List<Double> values = cryptoCurrenciesFetcher.getPriceForPastMonth(message.split(" ")[1]);
+                            sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        } catch (Exception e) {
+                            sendMessage(userId, "Failed to get price for past month. My calls have probably ran out. Try in a minute! :)");
+                            throw new RuntimeException(e);
+                        }
                     }
                     case "1y" -> {
-                        List<Double> values = cryptoCurrenciesFetcher.getPriceForPastYear(message.split(" ")[1]);
-                        sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        try {
+                            List<Double> values = cryptoCurrenciesFetcher.getPriceForPastYear(message.split(" ")[1]);
+                            sendMessage(userId, lineChartMaker.plotLineChart(values));
+                        } catch (Exception e) {
+                            sendMessage(userId, "Failed to get price for past year. My calls have probably ran out. Try in a minute! :)");
+                            throw new RuntimeException(e);
+                        }
                     }
                     default -> {
                         sendMessage(userId, "Unknown time period. Please use /help to see the list of available commands.");
@@ -187,25 +188,35 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 }
             }
             case "/news" -> {
-                if (userService.isEnabled(userId.toString()) == null || !userService.isEnabled(userId.toString())) {
+                if (userService.isEnabledByTgId(userId.toString()) == null || !userService.isEnabledByTgId(userId.toString())) {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
 
+                List<String> articles;
+
                 try {
-                    ArticlesAndSentiments response = vertexAiPrompter.getNewsOnCryptoCurrency(message.split(" ")[1]);
-                    if (response != null && !response.getArticles().isEmpty() && !response.getSentiments().isEmpty()) {
-                        sendMessage(userId, "Here are the articles that I found! :D");
-                        for (String article : response.getArticles()) {
-                            sendMessage(userId, article);
-                        }
-                        sendMessage(userId, "Here are the sentiments that I found! :D");
-                        sendMessage(userId, response.getSentiments());
-                    } else {
-                        sendMessage(userId, "Failed to get news for the cryptocurrency");
+                    articles = getLatestNewsService.getArticles(message.split(" ")[1]);
+                    sendMessage(userId, "Here are the latest news for " + message.split(" ")[1] + " :D");
+
+                    for (String article : articles) {
+                        sendMessage(userId, article);
                     }
                 } catch (Exception e) {
-                    sendMessage(userId, "Failed to get news for the cryptocurrency");
+                    sendMessage(userId, "Failed to get news for the cryptocurrency / no articles found :(");
+                    throw new RuntimeException(e);
+                }
+
+                try {
+                    StringBuilder articlesText = new StringBuilder();
+                    for (String article : articles) {
+                        articlesText.append("\nARTICLE\n").append(articleScraperService.scrapeArticle(article)).append("\n");
+                    }
+
+                    sendMessage(userId, "Here are the sentiments on these articles :)");
+                    sendMessage(userId, vertexAiPrompter.getSentiments(message.split(" ")[1], String.valueOf(articlesText)));
+                } catch (Exception e) {
+                    sendMessage(userId, "Failed to get sentiments for the articles. There is likely a problem with the Json formatting or the Vertex API :(");
                     throw new RuntimeException(e);
                 }
             }

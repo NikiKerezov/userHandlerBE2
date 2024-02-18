@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 @NoArgsConstructor
 public class ArticleScraperService {
+
     public String scrapeArticle(String url) throws Exception {
         // Connect to the webpage
         Document document = Jsoup.connect(url).get();

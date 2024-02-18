@@ -29,7 +29,7 @@ public class CryptoCurrency {
     private double change7d;
     private Date lastUpdated;
 
-    @Field("subscribersTelegramIds") // Explicitly specify the field name in MongoDB
+    @Field("subscribersTelegramIds")
     private List<Long> subscribersTelegramIds;
 
     public void addSubscriber(Long subscriberTelegramId) {

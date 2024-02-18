@@ -20,6 +20,8 @@ public class CryptoCurrencyService {
            existingCryptoCurrency.addSubscriber(telegramId);
            cryptoCurrencyRepository.save(existingCryptoCurrency);
            return "You have successfully subscribed to " + currencyName + "!";
+       } else if (cryptoCurrency.isEmpty()) {
+           return "There is no such cryptocurrency as " + currencyName + ", that is supported!";
        }
 
          return "You are already subscribed to " + currencyName + "!";
@@ -32,6 +34,8 @@ public class CryptoCurrencyService {
               existingCryptoCurrency.removeSubscriber(telegramId);
               cryptoCurrencyRepository.save(existingCryptoCurrency);
                 return "You have successfully unsubscribed from " + currencyName + "!";
+         } else if (cryptoCurrency.isEmpty()) {
+             return "There is no such cryptocurrency as " + currencyName + ", that is supported!";
          }
             return "You are not subscribed to " + currencyName + "!";
     }
