@@ -3,6 +3,7 @@ package com.nikola.userhandlerbe2.services;
 import lombok.NoArgsConstructor;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -10,18 +11,21 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 @Service
 @NoArgsConstructor
 public class GetLatestNewsService {
-    public List<String> getArticles(String name) throws IOException, InterruptedException {
-        String apiLink = "https://newsdata.io/api/1/news?apikey=";
-        String apiKey = "pub_3826784d349329e7c1351470ab145c048de97";
+    @Value("${newsDataApiKey}")
+    private String newsDataApiKey;
+
+    @Value("${newsDataApiUrl}")
+    private String newsDataApiUrl;
+
+    public HashSet<String> getArticles(String name) throws IOException, InterruptedException {
         String language = "en";
 
-        String uri = apiLink + apiKey + "&language=" + language + "&q=" + name;
+        String uri = newsDataApiUrl + newsDataApiKey + "&language=" + language + "&q=" + name;
         HttpClient httpClient = HttpClient.newHttpClient();
 
         // Create a GET request to the NewsData API
@@ -36,7 +40,7 @@ public class GetLatestNewsService {
         JSONObject responseJson = new JSONObject(response.body());
 
         JSONArray results = responseJson.getJSONArray("results");
-        List<String> articles = new ArrayList<>();
+        HashSet<String> articles = new HashSet<>();
         for (int i = 0; i < results.length(); i++) {
             JSONObject article = results.getJSONObject(i);
             JSONArray keywords;

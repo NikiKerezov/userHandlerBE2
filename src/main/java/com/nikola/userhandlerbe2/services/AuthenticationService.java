@@ -29,6 +29,7 @@ public class AuthenticationService {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .userRole(UserRole.USER)
+                .enabled(false)
                 .build();
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("User with such username already exists!");

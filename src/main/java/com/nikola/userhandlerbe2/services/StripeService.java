@@ -11,6 +11,7 @@ import com.stripe.model.StripeObject;
 import com.stripe.model.Subscription;
 import com.stripe.param.SubscriptionCancelParams;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,9 +21,10 @@ public class StripeService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final UserService userService;
 
+    @Value("${stripe.api.key}")
+    private String apiKey;
     public String cancelSubscription(String username) throws StripeException {
         username = username.replace("=", "");
-        String apiKey = "sk_test_51Oh8D3GtZ4KJVRzkK5ApFFmMTNjjFX2T2INrxkuQDDgsMrzqh9vYdFj29xeKLfSHGG85DrpebDy7TRpXaAiCOgbv00IelceL5S";
         String subscriptionId = userService.getUserByUsername(username).getSubscriptionId();
         String email = userService.getUserByUsername(username).getEmail();
         if (subscriptionId == null) {

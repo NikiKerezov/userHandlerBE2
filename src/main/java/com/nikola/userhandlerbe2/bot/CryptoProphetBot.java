@@ -103,15 +103,42 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 sendMessage(userId, "Welcome to CryptoProphet! Please use /help to see the list of available commands.");
             }
             case "/help" -> {
-                sendMessage(userId, """
-                        /start - Start the bot
-                        /help - Show the list of available commands
-                        /id - Show your telegram id so you can set it in the web page
-                        /subscribe - Subscribe to a new cryptocurrency \n-> /subscribe <cryptocurrency>
-                        /unsubscribe - Unsubscribe from a cryptocurrency \n-> /unsubscribe <cryptocurrency>
-                        /charts - Show charts for a cryptocurrency \n-> /charts <cryptocurrency> <time period> \n-> Time periods: 1h, 24h, 7d, 30d, 1y
-                        /news - Show news for a cryptocurrency \n-> /news <cryptocurrency>
-                        """);
+                if (message.split(" ").length > 1) {
+                    switch (message.split(" ")[1]) {
+                        case "start" -> sendMessage(userId, "Start the bot");
+                        case "help" -> sendMessage(userId, "Show the list of available commands");
+                        case "id" -> sendMessage(userId, "Show your telegram id so you can set it in the web page");
+                        case "subscribe" -> sendMessage(userId, "Subscribe to a new cryptocurrency\n" +
+                                "Usage: /subscribe [cryptocurrency]\n" +
+                                "Example: /subscribe bitcoin\n" +
+                                "Disclaimer: Write the full name of the cryptocurrency!");
+                        case "unsubscribe" -> sendMessage(userId, "Unsubscribe from a cryptocurrency\n" +
+                                "Usage: /unsubscribe [cryptocurrency]\n" +
+                                "Example: /unsubscribe bitcoin\n" +
+                                "Disclaimer: Write the full name of the cryptocurrency!");
+                        case "charts" -> sendMessage(userId, "Show charts for a cryptocurrency\n" +
+                                "Usage: /charts [cryptocurrency] [time period]\n" +
+                                "Example: /charts bitcoin 1h\n" +
+                                "Time periods: 1h, 24h, 7d, 30d, 1y\n" +
+                                "Disclaimer: Write the full name of the cryptocurrency and one of the listed time periods!");
+                        case "news" -> sendMessage(userId, "Show news for a cryptocurrency\n" +
+                                "Usage: /news [cryptocurrency]\n" +
+                                "Example: /news bitcoin\n" +
+                                "Disclaimer: Write the full name of the cryptocurrency!");
+                        default -> sendMessage(userId, "Unknown command. Please use /help to see the list of available commands.");
+                    }
+                } else {
+                    sendMessage(userId, """
+                            /start - Start the bot
+                            /help - Show the list of available commands
+                            /id - Show your telegram id so you can set it in the web page
+                            /subscribe - Subscribe to a new cryptocurrency 
+                            /unsubscribe - Unsubscribe from a cryptocurrency 
+                            /charts - Show charts for a cryptocurrency 
+                            /news - Show news for a cryptocurrency
+                            For a detailed subscription of a command, use /help [command] 
+                            """);
+                }
             }
             case "/id" -> {
                 sendMessage(userId, "Your telegram id is: " + userId);
@@ -121,15 +148,24 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
-                sendMessage(userId, cryptoCurrencyService.addSubscribersToCryptoCurrency(message.split(" ")[1], userId));
-
+                try {
+                    sendMessage(userId, cryptoCurrencyService.addSubscribersToCryptoCurrency(message.split(" ")[1], userId));
+                } catch (Exception e) {
+                    sendMessage(userId, "Failed to subscribe to the cryptocurrency. There is likely a problem with the command format :(");
+                    throw new RuntimeException(e);
+                }
             }
             case "/unsubscribe" -> {
                 if (userService.isEnabledByTgId(userId.toString()) == null || !userService.isEnabledByTgId(userId.toString())) {
                     sendMessage(userId, "You need to be logged in and subscribed to use this command. Please log in and subscribe in the web page.");
                     return;
                 }
-                sendMessage(userId, cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId));
+                try {
+                    sendMessage(userId, cryptoCurrencyService.removeSubscribersFromCryptoCurrency(message.split(" ")[1], userId));
+                } catch (Exception e) {
+                    sendMessage(userId, "Failed to unsubscribe from the cryptocurrency. There is likely a problem with the command format :(");
+                    throw new RuntimeException(e);
+                }
             }
             case "/charts" -> {
                 if (userService.isEnabledByTgId(userId.toString()) == null || !userService.isEnabledByTgId(userId.toString())) {
@@ -151,7 +187,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                             List<Double> values = cryptoCurrenciesFetcher.getPriceForPastDay(message.split(" ")[1]);
                             sendMessage(userId, lineChartMaker.plotLineChart(values));
                         } catch (Exception e) {
-                            sendMessage(userId, "Failed to get price for past day. My calls have probably ran out. Try in a minute! :)");
+                            sendMessage(userId, "Failed to get price for past day. If you typed the command correctly, my calls have probably ran out. Try in a minute! :)");
                             throw new RuntimeException(e);
                         }
                     }
@@ -160,7 +196,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                             List<Double> values = cryptoCurrenciesFetcher.getPriceForPastWeek(message.split(" ")[1]);
                             sendMessage(userId, lineChartMaker.plotLineChart(values));
                         } catch (Exception e) {
-                            sendMessage(userId, "Failed to get price for past week. My calls have probably ran out. Try in a minute! :)");
+                            sendMessage(userId, "Failed to get price for past week. If you typed the command correctly, myy calls have probably ran out. Try in a minute! :)");
                             throw new RuntimeException(e);
                         }
                     }
@@ -169,7 +205,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                             List<Double> values = cryptoCurrenciesFetcher.getPriceForPastMonth(message.split(" ")[1]);
                             sendMessage(userId, lineChartMaker.plotLineChart(values));
                         } catch (Exception e) {
-                            sendMessage(userId, "Failed to get price for past month. My calls have probably ran out. Try in a minute! :)");
+                            sendMessage(userId, "Failed to get price for past month. If you typed the command correctly, myy calls have probably ran out. Try in a minute! :)");
                             throw new RuntimeException(e);
                         }
                     }
@@ -178,7 +214,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                             List<Double> values = cryptoCurrenciesFetcher.getPriceForPastYear(message.split(" ")[1]);
                             sendMessage(userId, lineChartMaker.plotLineChart(values));
                         } catch (Exception e) {
-                            sendMessage(userId, "Failed to get price for past year. My calls have probably ran out. Try in a minute! :)");
+                            sendMessage(userId, "Failed to get price for past year. If you typed the command correctly, myy calls have probably ran out. Try in a minute! :)");
                             throw new RuntimeException(e);
                         }
                     }
@@ -193,10 +229,12 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                List<String> articles;
+                Set<String> articles;
 
                 try {
                     articles = getLatestNewsService.getArticles(message.split(" ")[1]);
+                    //check for duplicates
+
                     sendMessage(userId, "Here are the latest news for " + message.split(" ")[1] + " :D");
 
                     for (String article : articles) {

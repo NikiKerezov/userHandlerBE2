@@ -3,6 +3,7 @@ package com.nikola.userhandlerbe2.services;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -15,10 +16,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CryptoCurrenciesFetcherService {
+    @Value("${coinGeckoApiUrl}")
+    private String coinGeckoApiUrl;
+    @Value("${coinGeckoKey}")
+    private String coinGeckoKey;
     public List<Double> getPriceForPastHour(String name) {
-        String coinGeckoApiUrl = "https://api.coingecko.com/api/v3/coins";
-        String coinGeckoKey = "CG-RSdWXT3k95eCn2GunzFbT41A";
-
         try {
             // Create a HTTP client
             HttpClient httpClient = HttpClient.newHttpClient();
@@ -52,9 +54,6 @@ public class CryptoCurrenciesFetcherService {
     }
 
     public List<Double> getPriceForPastDay(String name) {
-        String coinGeckoApiUrl = "https://api.coingecko.com/api/v3/coins";
-        String coinGeckoKey = "CG-RSdWXT3k95eCn2GunzFbT41A";
-
         try {
             // Create a HTTP client
             HttpClient httpClient = HttpClient.newHttpClient();
@@ -88,9 +87,6 @@ public class CryptoCurrenciesFetcherService {
     }
 
     public List<Double> getPriceForPastWeek(String name) {
-        String coinGeckoApiUrl = "https://api.coingecko.com/api/v3/coins";
-        String coinGeckoKey = "CG-RSdWXT3k95eCn2GunzFbT41A";
-
         try {
             // Create a HTTP client
             HttpClient httpClient = HttpClient.newHttpClient();
@@ -123,9 +119,6 @@ public class CryptoCurrenciesFetcherService {
     }
 
     public List<Double> getPriceForPastMonth(String name) {
-        String coinGeckoApiUrl = "https://api.coingecko.com/api/v3/coins";
-        String coinGeckoKey = "CG-RSdWXT3k95eCn2GunzFbT41A";
-
         try {
             // Create a HTTP client
             HttpClient httpClient = HttpClient.newHttpClient();
@@ -158,9 +151,6 @@ public class CryptoCurrenciesFetcherService {
     }
 
     public List<Double> getPriceForPastYear(String name) {
-        String coinGeckoApiUrl = "https://api.coingecko.com/api/v3/coins";
-        String coinGeckoKey = "CG-RSdWXT3k95eCn2GunzFbT41A";
-
         try {
             // Create a HTTP client
             HttpClient httpClient = HttpClient.newHttpClient();
