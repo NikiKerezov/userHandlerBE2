@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nikola.userhandlerbe2.utils.CustomerDetailsExtractor;
+import com.nikola.userhandlerbe2.utils.Logger;
 import com.stripe.StripeClient;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
@@ -61,27 +62,25 @@ public class StripeService {
         // Handle the event
         switch (event.getType()) {
             case "checkout.session.completed":
-                System.out.println(payload);
-                System.out.println("Checkout session completed");
-                System.out.println("Customer name: " + customerDetailsExtractor.extractCustomerName(payload));
-                System.out.println("Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload));
-                System.out.println("Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
-                System.out.println("Subscription ID: " + customerDetailsExtractor.extractSubscriptionId(payload));
+                Logger.log("Checkout session completed" + "\n"
+                        + "Customer name: " + customerDetailsExtractor.extractCustomerName(payload)
+                        + "\n" + "Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload)
+                        + "\n" + "Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
                 userService.setEnabled(customerDetailsExtractor.extractCustomerEmail(payload), true);
                 userService.setSubscriptionId(customerDetailsExtractor.extractCustomerEmail(payload), customerDetailsExtractor.extractSubscriptionId(payload));
                 break;
             case "customer.subscription.deleted":
-                System.out.println("Subscription deleted");
-                System.out.println("Customer name: " + customerDetailsExtractor.extractCustomerName(payload));
-                System.out.println("Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload));
-                System.out.println("Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
+                Logger.log("Subscription deleted" + "\n"
+                        + "Customer name: " + customerDetailsExtractor.extractCustomerName(payload)
+                        + "\n" + "Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload)
+                        + "\n" + "Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
                 userService.setEnabled(customerDetailsExtractor.extractCustomerEmail(payload), false);
                 break;
             case "invoice.payment_failed":
-                System.out.println("Payment failed");
-                System.out.println("Customer name: " + customerDetailsExtractor.extractCustomerName(payload));
-                System.out.println("Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload));
-                System.out.println("Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
+                Logger.log("Payment failed" + "\n"
+                        + "Customer name: " + customerDetailsExtractor.extractCustomerName(payload)
+                        + "\n" + "Customer email: " + customerDetailsExtractor.extractCustomerEmail(payload)
+                        + "\n" + "Payment status: " + customerDetailsExtractor.extractPaymentStatus(payload));
                 userService.setEnabled(customerDetailsExtractor.extractCustomerEmail(payload), false);
                 break;
         }

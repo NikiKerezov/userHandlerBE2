@@ -78,12 +78,7 @@ public class VertexAiPrompterService {
       JsonFormat.parser().merge(parameters, parameterValueBuilder);
       Value parameterValue = parameterValueBuilder.build();
 
-      PredictResponse predictResponse =
-          predictionServiceClient.predict(endpointName, instances, parameterValue);
-      System.out.println("Predict Response");
-      System.out.println(predictResponse);
-
-        return predictResponse;
+      return predictionServiceClient.predict(endpointName, instances, parameterValue);
     }
   }
 }

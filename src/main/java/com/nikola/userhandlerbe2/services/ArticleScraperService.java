@@ -1,5 +1,6 @@
 package com.nikola.userhandlerbe2.services;
 
+import com.nikola.userhandlerbe2.utils.Logger;
 import lombok.NoArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -17,8 +18,7 @@ public class ArticleScraperService {
 
         // Get the title of the webpage
         String title = document.title();
-        System.out.println("Title: " + title);
-
+        Logger.log("Scraping article: " + title);
         // Get the body of the webpage
         Element body = document.body();
 

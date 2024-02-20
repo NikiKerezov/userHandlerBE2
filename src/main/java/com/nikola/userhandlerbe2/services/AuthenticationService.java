@@ -1,11 +1,12 @@
 package com.nikola.userhandlerbe2.services;
 
-import com.nikola.userhandlerbe2.entities.UserRole;
 import com.nikola.userhandlerbe2.entities.User;
+import com.nikola.userhandlerbe2.entities.UserRole;
 import com.nikola.userhandlerbe2.repositories.UserRepository;
 import com.nikola.userhandlerbe2.requests.AuthenticationRequest;
 import com.nikola.userhandlerbe2.requests.AuthenticationResponse;
 import com.nikola.userhandlerbe2.requests.RegisterRequest;
+import com.nikola.userhandlerbe2.utils.Logger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,7 +22,6 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     public AuthenticationResponse register(RegisterRequest request) {
-        System.out.println(request);
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -38,6 +38,7 @@ public class AuthenticationService {
         }
         userRepository.save(user);
         String jwtToken = jwtService.generateToken(user);
+        Logger.log("User " + user.getUsername() + " registered");
         return AuthenticationResponse.builder()
                 .jwtToken(jwtToken)
                 .build();
@@ -53,6 +54,7 @@ public class AuthenticationService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         String jwtToken = jwtService.generateToken(user);
+        Logger.log("User " + user.getUsername() + " authenticated");
         return AuthenticationResponse.builder()
                 .jwtToken(jwtToken)
                 .build();

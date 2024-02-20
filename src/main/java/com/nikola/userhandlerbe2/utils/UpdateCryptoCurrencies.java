@@ -59,10 +59,6 @@ public class UpdateCryptoCurrencies {
                 existingCryptoCurrency.setChange7d(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_7d"));
                 existingCryptoCurrency.setLastUpdated(new Date());
 
-
-                System.out.println(existingCryptoCurrency.getSubscribersTelegramIds());
-                System.out.println(existingCryptoCurrency.getPrice());
-
                 //notify users
                 double priceDifferencePercent = (newPrice - oldPrice) / oldPrice * 100;
                 if (priceDifferencePercent > 1 || priceDifferencePercent < -1)
@@ -71,8 +67,7 @@ public class UpdateCryptoCurrencies {
                         cryptoProphetBot.sendMessage(id, "Price difference is " + priceDifferencePercent + "%");
                     }
 
-                System.out.println(existingCryptoCurrency.getName() + " " + existingCryptoCurrency.getPrice());
-
+                Logger.log(existingCryptoCurrency.getName() + " " + existingCryptoCurrency.getPrice() + "\nUPDATED");
                 // Save the updated cryptocurrency
                 cryptoCurrencyRepository.save(existingCryptoCurrency);
             } catch (Exception e) {
@@ -110,8 +105,7 @@ public class UpdateCryptoCurrencies {
                 newCryptoCurrency.setLastUpdated(new Date());
                 newCryptoCurrency.setSubscribersTelegramIds(new ArrayList<>());
 
-                System.out.println(newCryptoCurrency.getName() + " " + newCryptoCurrency.getPrice() + "\nNEW");
-
+                Logger.log(newCryptoCurrency.getName() + " " + newCryptoCurrency.getPrice() + "\nCREATED");
                 // Save the new cryptocurrency
                 cryptoCurrencyRepository.save(newCryptoCurrency);
             } catch (Exception e) {

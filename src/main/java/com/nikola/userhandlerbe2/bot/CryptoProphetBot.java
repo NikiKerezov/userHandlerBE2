@@ -2,6 +2,7 @@ package com.nikola.userhandlerbe2.bot;
 
 import com.nikola.userhandlerbe2.services.*;
 import com.nikola.userhandlerbe2.utils.LineChartMaker;
+import com.nikola.userhandlerbe2.utils.Logger;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,9 +75,8 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
         }
         var message = update.getMessage();
         var user = message.getFrom();
-        System.out.println(message.getText());
+        Logger.log("Received message from " + user.getId() + ": " + message.getText());
         users.add(user.getId());
-        System.out.println(user.getId());
         handleMessage(user.getId(), message.getText());
     }
 
@@ -89,6 +89,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 .text(message)
                 .build();
         try {
+            Logger.log("Sending message to " + userId + ": " + message);
             this.execute(sendMessage);
         } catch (Exception e) {
             throw new RuntimeException(e);

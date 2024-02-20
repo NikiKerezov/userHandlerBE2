@@ -2,9 +2,13 @@ package com.nikola.userhandlerbe2.controllers;
 
 import com.nikola.userhandlerbe2.requests.SetTelegramIdRequest;
 import com.nikola.userhandlerbe2.services.UserService;
+import com.nikola.userhandlerbe2.utils.Logger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/userHandler/v2/user")
@@ -19,7 +23,7 @@ public class UserController {
         String telegramId = request.getTelegramId();
         try {
             userService.setTelegramId(username, telegramId);
-            System.out.println("Telegram ID set successfully: " + telegramId);
+            Logger.log("Telegram ID set for user " + username + " to " + telegramId);
             return ResponseEntity.ok("Telegram ID set successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

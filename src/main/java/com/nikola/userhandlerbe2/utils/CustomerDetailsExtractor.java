@@ -42,10 +42,10 @@ public class CustomerDetailsExtractor {
                 this.subscriptionId = grep("\"subscription\": (.*?),", payload);
                 this.subscriptionId = subscriptionId.replace("\"", "");
             } catch (RuntimeException e) {
-                System.out.println("Error extracting customer details: " + e.getMessage());
+                throw new RuntimeException("Error extracting the customer details: " + e.getMessage());
             }
         } catch (JsonProcessingException e) {
-            System.out.println("Error deserializing the payload: " + e.getMessage());
+            throw new RuntimeException("Error deserializing the payload: " + e.getMessage());
         }
 
     }
