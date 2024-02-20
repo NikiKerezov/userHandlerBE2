@@ -5,7 +5,6 @@ import com.nikola.userhandlerbe2.utils.LineChartMaker;
 import com.nikola.userhandlerbe2.utils.Logger;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -14,7 +13,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,29 +20,30 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CryptoProphetBot extends TelegramLongPollingBot {
-    @Autowired
-    private CryptoCurrencyService cryptoCurrencyService;
+    private final CryptoCurrencyService cryptoCurrencyService;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private CryptoCurrenciesFetcherService cryptoCurrenciesFetcher;
+    private final CryptoCurrenciesFetcherService cryptoCurrenciesFetcher;
 
-    @Autowired
-    private LineChartMaker lineChartMaker;
+    private final LineChartMaker lineChartMaker;
 
-    @Autowired
-    private VertexAiPrompterService vertexAiPrompter;
-    @Autowired
-    private ArticleScraperService articleScraperService;
-    @Autowired
-    private GetLatestNewsService getLatestNewsService;
+    private final VertexAiPrompterService vertexAiPrompter;
+    private final ArticleScraperService articleScraperService;
+    private final GetLatestNewsService getLatestNewsService;
     private boolean isRegistered = false;
-    private Set<Long> users = new HashSet<>();
+//    @Value("${bot.token}")
+//    private String botToken;
 
-    public CryptoProphetBot() {
+    public CryptoProphetBot(CryptoCurrencyService cryptoCurrencyService, UserService userService, CryptoCurrenciesFetcherService cryptoCurrenciesFetcher, LineChartMaker lineChartMaker, VertexAiPrompterService vertexAiPrompter, ArticleScraperService articleScraperService, GetLatestNewsService getLatestNewsService) {
         registerBot();
+        this.cryptoCurrencyService = cryptoCurrencyService;
+        this.userService = userService;
+        this.cryptoCurrenciesFetcher = cryptoCurrenciesFetcher;
+        this.lineChartMaker = lineChartMaker;
+        this.vertexAiPrompter = vertexAiPrompter;
+        this.articleScraperService = articleScraperService;
+        this.getLatestNewsService = getLatestNewsService;
     }
 
     private void registerBot() {
@@ -76,7 +75,6 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
         var message = update.getMessage();
         var user = message.getFrom();
         Logger.log("Received message from " + user.getId() + ": " + message.getText());
-        users.add(user.getId());
         handleMessage(user.getId(), message.getText());
     }
 
@@ -254,6 +252,7 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
 
                     sendMessage(userId, "Here are the sentiments on these articles :)");
                     sendMessage(userId, vertexAiPrompter.getSentiments(message.split(" ")[1], String.valueOf(articlesText)));
+                    sendMessage(userId, "Disclaimer: If the sentiments are less that the articles, it means that some of the articles are faulty or too long for the Vertex AI to process!");
                 } catch (Exception e) {
                     sendMessage(userId, "Failed to get sentiments for the articles. There is likely a problem with the Json formatting or the Vertex API :(");
                     throw new RuntimeException(e);

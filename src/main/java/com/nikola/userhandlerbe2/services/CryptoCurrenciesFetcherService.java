@@ -16,9 +16,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CryptoCurrenciesFetcherService {
-    @Value("${coinGeckoApiUrl}")
+    @Value("${coinGecko.api.url}")
     private String coinGeckoApiUrl;
-    @Value("${coinGeckoKey}")
+    @Value("${coinGecko.api.key}")
     private String coinGeckoKey;
     public List<Double> getPriceForPastHour(String name) {
         try {

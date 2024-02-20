@@ -16,10 +16,10 @@ import java.util.HashSet;
 @Service
 @NoArgsConstructor
 public class GetLatestNewsService {
-    @Value("${newsDataApiKey}")
+    @Value("${newsData.api.key}")
     private String newsDataApiKey;
 
-    @Value("${newsDataApiUrl}")
+    @Value("${newsData.api.url}")
     private String newsDataApiUrl;
 
     public HashSet<String> getArticles(String name) throws IOException, InterruptedException {

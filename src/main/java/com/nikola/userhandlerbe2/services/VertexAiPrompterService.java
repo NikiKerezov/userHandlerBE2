@@ -7,6 +7,8 @@ import com.google.cloud.aiplatform.v1beta1.PredictionServiceClient;
 import com.google.cloud.aiplatform.v1beta1.PredictionServiceSettings;
 import com.google.protobuf.Value;
 import com.google.protobuf.util.JsonFormat;
+import com.nikola.userhandlerbe2.utils.Logger;
+import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +36,22 @@ public class VertexAiPrompterService {
     String location = "us-central1";
     String publisher = "google";
     String model = "text-bison@002";
-
-    PredictResponse predictResponse = predictTextPrompt(instance, parameters, project, location, publisher, model);
-
+    PredictResponse predictResponse = null;
+    try {
+      predictResponse = predictTextPrompt(instance, parameters, project, location, publisher, model);
+    }
+    catch (StatusRuntimeException e) {
+      String[] articlesArray = articles.split("ARTICLE");
+      StringBuilder newArticles = new StringBuilder();
+      for (int i = 0; i < articlesArray.length - 1; i++) {
+        newArticles.append(articlesArray[i]);
+      }
+      Logger.log("Failed to get sentiment, trying again with less articles");
+      return getSentiments(cryptoCurrencyName, newArticles.toString());
+    }
+    if (predictResponse == null) {
+      throw new Exception("Failed to get sentiment");
+    }
     Value prediction = predictResponse.getPredictions(0);
 
     // Get the 'content' field from the prediction
