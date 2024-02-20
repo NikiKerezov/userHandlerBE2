@@ -258,7 +258,6 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
 
                 try {
                     articles = getLatestNewsService.getArticles(message.split(" ")[1]);
-                    //check for duplicates
 
                     sendMessage(userId, "Here are the latest news for " + message.split(" ")[1] + " :D");
 

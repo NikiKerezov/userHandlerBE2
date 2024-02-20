@@ -5,6 +5,7 @@ import com.nikola.userhandlerbe2.entities.CryptoCurrency;
 import com.nikola.userhandlerbe2.repositories.CryptoCurrencyRepository;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,96 +23,104 @@ public class UpdateCryptoCurrencies {
     private final CryptoCurrencyRepository cryptoCurrencyRepository;
     private final CryptoProphetBot cryptoProphetBot;
 
-   public void updateCryptoCurrency(String name) {
-        String coinGeckoApiUrl = "https://api.coingecko.com/api/v3/coins";
-        String coinGeckoKey = "CG-RSdWXT3k95eCn2GunzFbT41A";
+    @Value("${coinGecko.api.url}")
+    private String coinGeckoApiUrl;
+    @Value("${coinGecko.api.key}")
+    private String coinGeckoKey;
 
+    private void updateExistingCryptoCurrency(String name, CryptoCurrency existingCryptoCurrency) {
+        try {
+            // Create a HTTP client
+            HttpClient httpClient = HttpClient.newHttpClient();
+
+            name = name.toLowerCase();
+
+            // Create a GET request to the CoinGecko API and add the key to the header as authorization type bearer
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(coinGeckoApiUrl + "/" + name))
+                    .header("Authorization", "Bearer " + coinGeckoKey)
+                    .build();
+
+
+            // Execute the GET request and get the response
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Parse the JSON response
+            JSONObject responseJson = new JSONObject(response.body());
+
+            double oldPrice = existingCryptoCurrency.getPrice();
+            double newPrice = responseJson.getJSONObject("market_data").getJSONObject("current_price").getDouble("usd");
+
+            // Update the existing cryptocurrency with the new data
+            existingCryptoCurrency.setPrice(responseJson.getJSONObject("market_data").getJSONObject("current_price").getDouble("usd"));
+            existingCryptoCurrency.setMarketCap(responseJson.getJSONObject("market_data").getJSONObject("market_cap").getDouble("usd"));
+            existingCryptoCurrency.setVolume24h(responseJson.getJSONObject("market_data").getJSONObject("total_volume").getDouble("usd"));
+            existingCryptoCurrency.setChange24h(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_24h"));
+            existingCryptoCurrency.setChange7d(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_7d"));
+            existingCryptoCurrency.setLastUpdated(new Date());
+
+            //notify users
+            double priceDifferencePercent = (newPrice - oldPrice) / oldPrice * 100;
+            if (priceDifferencePercent > 1 || priceDifferencePercent < -1)
+                for (Long id : existingCryptoCurrency.getSubscribersTelegramIds()) {
+                    cryptoProphetBot.sendMessage(id, "Price of " + existingCryptoCurrency.getName() + " has changed from " + oldPrice + " to " + newPrice + "$!");
+                    cryptoProphetBot.sendMessage(id, "Price difference is " + priceDifferencePercent + "%");
+                }
+
+            Logger.log(existingCryptoCurrency.getName() + " " + existingCryptoCurrency.getPrice() + "\nUPDATED");
+            // Save the updated cryptocurrency
+            cryptoCurrencyRepository.save(existingCryptoCurrency);
+        } catch (Exception e) {
+            // Handle any exceptions that occur
+            throw new RuntimeException("Failed to update crypto currency", e);
+        }
+    }
+
+    private void createNewCryptoCurrency(String name) {
+        try {
+            // Create a new cryptocurrency
+            CryptoCurrency newCryptoCurrency = new CryptoCurrency();
+            newCryptoCurrency.setName(name);
+            // Create a HTTP client
+            HttpClient httpClient = HttpClient.newHttpClient();
+
+            name = name.toLowerCase();
+
+            // Create a GET request to the CoinGecko API
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(coinGeckoApiUrl + "/" + name))
+                    .header("Authorization", "Bearer " + coinGeckoKey)
+                    .build();
+
+            // Execute the GET request and get the response
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Parse the JSON response
+            JSONObject responseJson = new JSONObject(response.body());
+
+            // Set the new cryptocurrency's data
+            newCryptoCurrency.setPrice(responseJson.getJSONObject("market_data").getJSONObject("current_price").getDouble("usd"));
+            newCryptoCurrency.setMarketCap(responseJson.getJSONObject("market_data").getJSONObject("market_cap").getDouble("usd"));
+            newCryptoCurrency.setVolume24h(responseJson.getJSONObject("market_data").getJSONObject("total_volume").getDouble("usd"));
+            newCryptoCurrency.setChange24h(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_24h"));
+            newCryptoCurrency.setChange7d(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_7d"));
+            newCryptoCurrency.setLastUpdated(new Date());
+            newCryptoCurrency.setSubscribersTelegramIds(new ArrayList<>());
+
+            Logger.log(newCryptoCurrency.getName() + " " + newCryptoCurrency.getPrice() + "\nCREATED");
+            // Save the new cryptocurrency
+            cryptoCurrencyRepository.save(newCryptoCurrency);
+        } catch (Exception e) {
+            // Handle any exceptions that occur
+            throw new RuntimeException("Failed to update crypto currency", e);
+        }
+    }
+    public void updateCryptoCurrency(String name) {
         Optional<CryptoCurrency> cryptoCurrency = cryptoCurrencyRepository.findByName(name);
         if (cryptoCurrency.isPresent()) {
-            CryptoCurrency existingCryptoCurrency = cryptoCurrency.get();
-            try {
-                // Create a HTTP client
-                HttpClient httpClient = HttpClient.newHttpClient();
-
-                name = name.toLowerCase();
-
-                // Create a GET request to the CoinGecko API and add the key to the header as authorization type bearer
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(coinGeckoApiUrl + "/" + name))
-                        .header("Authorization", "Bearer " + coinGeckoKey)
-                        .build();
-
-
-                // Execute the GET request and get the response
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                // Parse the JSON response
-                JSONObject responseJson = new JSONObject(response.body());
-
-                double oldPrice = existingCryptoCurrency.getPrice();
-                double newPrice = responseJson.getJSONObject("market_data").getJSONObject("current_price").getDouble("usd");
-
-                // Update the existing cryptocurrency with the new data
-                existingCryptoCurrency.setPrice(responseJson.getJSONObject("market_data").getJSONObject("current_price").getDouble("usd"));
-                existingCryptoCurrency.setMarketCap(responseJson.getJSONObject("market_data").getJSONObject("market_cap").getDouble("usd"));
-                existingCryptoCurrency.setVolume24h(responseJson.getJSONObject("market_data").getJSONObject("total_volume").getDouble("usd"));
-                existingCryptoCurrency.setChange24h(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_24h"));
-                existingCryptoCurrency.setChange7d(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_7d"));
-                existingCryptoCurrency.setLastUpdated(new Date());
-
-                //notify users
-                double priceDifferencePercent = (newPrice - oldPrice) / oldPrice * 100;
-                if (priceDifferencePercent > 1 || priceDifferencePercent < -1)
-                    for (Long id : existingCryptoCurrency.getSubscribersTelegramIds()) {
-                        cryptoProphetBot.sendMessage(id, "Price of " + existingCryptoCurrency.getName() + " has changed from " + oldPrice + " to " + newPrice + "$!");
-                        cryptoProphetBot.sendMessage(id, "Price difference is " + priceDifferencePercent + "%");
-                    }
-
-                Logger.log(existingCryptoCurrency.getName() + " " + existingCryptoCurrency.getPrice() + "\nUPDATED");
-                // Save the updated cryptocurrency
-                cryptoCurrencyRepository.save(existingCryptoCurrency);
-            } catch (Exception e) {
-                // Handle any exceptions that occur
-                throw new RuntimeException("Failed to update crypto currency", e);
-            }
+           updateExistingCryptoCurrency(name, cryptoCurrency.get());
         } else {
-            try {
-                // Create a new cryptocurrency
-                CryptoCurrency newCryptoCurrency = new CryptoCurrency();
-                newCryptoCurrency.setName(name);
-                // Create a HTTP client
-                HttpClient httpClient = HttpClient.newHttpClient();
-
-                name = name.toLowerCase();
-
-                // Create a GET request to the CoinGecko API
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(coinGeckoApiUrl + "/" + name))
-                        .header("Authorization", "Bearer " + coinGeckoKey)
-                        .build();
-
-                // Execute the GET request and get the response
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                // Parse the JSON response
-                JSONObject responseJson = new JSONObject(response.body());
-
-                // Set the new cryptocurrency's data
-                newCryptoCurrency.setPrice(responseJson.getJSONObject("market_data").getJSONObject("current_price").getDouble("usd"));
-                newCryptoCurrency.setMarketCap(responseJson.getJSONObject("market_data").getJSONObject("market_cap").getDouble("usd"));
-                newCryptoCurrency.setVolume24h(responseJson.getJSONObject("market_data").getJSONObject("total_volume").getDouble("usd"));
-                newCryptoCurrency.setChange24h(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_24h"));
-                newCryptoCurrency.setChange7d(responseJson.getJSONObject("market_data").getDouble("price_change_percentage_7d"));
-                newCryptoCurrency.setLastUpdated(new Date());
-                newCryptoCurrency.setSubscribersTelegramIds(new ArrayList<>());
-
-                Logger.log(newCryptoCurrency.getName() + " " + newCryptoCurrency.getPrice() + "\nCREATED");
-                // Save the new cryptocurrency
-                cryptoCurrencyRepository.save(newCryptoCurrency);
-            } catch (Exception e) {
-                // Handle any exceptions that occur
-                throw new RuntimeException("Failed to update crypto currency", e);
-            }
+            createNewCryptoCurrency(name);
         }
     }
     @Scheduled(fixedDelay = 600000)
