@@ -32,8 +32,6 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
     private final ArticleScraperService articleScraperService;
     private final GetLatestNewsService getLatestNewsService;
     private boolean isRegistered = false;
-//    @Value("${bot.token}")
-//    private String botToken;
 
     public CryptoProphetBot(CryptoCurrencyService cryptoCurrencyService, UserService userService, CryptoCurrenciesFetcherService cryptoCurrenciesFetcher, LineChartMaker lineChartMaker, VertexAiPrompterService vertexAiPrompter, ArticleScraperService articleScraperService, GetLatestNewsService getLatestNewsService) {
         registerBot();
@@ -272,7 +270,11 @@ public class CryptoProphetBot extends TelegramLongPollingBot {
                 try {
                     StringBuilder articlesText = new StringBuilder();
                     for (String article : articles) {
-                        articlesText.append("\nARTICLE\n").append(articleScraperService.scrapeArticle(article)).append("\n");
+                        try {
+                            articlesText.append("\nARTICLE Link: \n").append(article).append("\n").append(articleScraperService.scrapeArticle(article)).append("\n");
+                        } catch (Exception ignored) {
+                            sendMessage(userId, "Failed to scrape article: " + article);
+                        }
                     }
 
                     sendMessage(userId, "Here are the sentiments on these articles :)");

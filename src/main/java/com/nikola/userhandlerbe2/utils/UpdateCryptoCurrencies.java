@@ -115,7 +115,7 @@ public class UpdateCryptoCurrencies {
             throw new RuntimeException("Failed to update crypto currency", e);
         }
     }
-    public void updateCryptoCurrency(String name) {
+    private void updateCryptoCurrency(String name) {
         Optional<CryptoCurrency> cryptoCurrency = cryptoCurrencyRepository.findByName(name);
         if (cryptoCurrency.isPresent()) {
            updateExistingCryptoCurrency(name, cryptoCurrency.get());
@@ -123,7 +123,7 @@ public class UpdateCryptoCurrencies {
             createNewCryptoCurrency(name);
         }
     }
-    @Scheduled(fixedDelay = 600000)
+    @Scheduled(fixedDelay = 1000 * 60 * 60 * 24)
     public void invokeUpdateCryptoCurrencies() {
             updateCryptoCurrency("bitcoin");
             updateCryptoCurrency("ethereum");

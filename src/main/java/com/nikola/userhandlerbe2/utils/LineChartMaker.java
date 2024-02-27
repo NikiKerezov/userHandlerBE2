@@ -11,8 +11,6 @@ import java.util.List;
 public class LineChartMaker {
 
     public  String plotLineChart(List<Double> values) {
-        // Convert the list of Double values to array of double
-
         // Create a new line
         Line line = Plots.newLine(DataUtil.scale(values), Color.BLUE);
 
